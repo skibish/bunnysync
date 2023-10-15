@@ -42,6 +42,9 @@ bunnysync \
     -src /public \
     -storage-zone $STORAGE_ZONE \
     -storage-api-key $STORAGE_API_KEY
++ blog/implementing-microsoft-rest-api-filter/index.html
++ blog/index.html
+- img/me.hover.jpg
 ```
 
 [Real life example](https://github.com/skibish/sergeykibish.com/blob/7000d869d37322167a731e189b0ff6b6298f9570/.github/workflows/deploy.yml#L43-L56).
