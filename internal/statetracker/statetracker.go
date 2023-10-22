@@ -82,7 +82,7 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 				return nil
 			}
 			select {
-			case paths <- filepath.ToSlash(path):
+			case paths <- path:
 			case <-gctx.Done():
 				return gctx.Err()
 			}
@@ -98,7 +98,7 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 				if err != nil {
 					return err
 				}
-				correctedFilePath := strings.TrimPrefix(path, srcDir)[1:]
+				correctedFilePath := filepath.ToSlash(strings.TrimPrefix(path, srcDir)[1:])
 				hash := getSha256Hash(b)
 				remoteHash, ok := s.get(correctedFilePath)
 				if !ok || hash != remoteHash {
