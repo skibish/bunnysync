@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	if err := run(os.Stdout); err != nil {
+	if err := run(os.Stdout, os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -23,43 +23,47 @@ func main() {
 	os.Exit(0)
 }
 
-func run(w io.Writer) error {
+func run(w io.Writer, args []string) error {
 	var (
-		srcPath         string
-		storageEndpoint string
-		storageApiKey   string
-		storageZoneName string
-		dryRun          bool
+		srcPath  string
+		endpoint string
+		password string
+		zoneName string
+		dryRun   bool
 	)
 
-	currentDirectory, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-
 	fs := flag.NewFlagSet("bunnysync", flag.ExitOnError)
-	fs.StringVar(&srcPath, "src", currentDirectory, "source path")
-	fs.StringVar(&storageEndpoint, "storage-endpoint", "storage.bunnycdn.com", "storage endpoint")
-	fs.StringVar(&storageApiKey, "storage-api-key", "", "storage api key")
-	fs.StringVar(&storageZoneName, "storage-zone", "", "storage zone name")
+	fs.StringVar(&srcPath, "src", "", "path to the directory to sync")
+	fs.StringVar(&endpoint, "endpoint", "https://storage.bunnycdn.com", "storage endpoint")
+	fs.StringVar(&password, "password", "", "storage password")
+	fs.StringVar(&zoneName, "zone-name", "", "storage zone name")
 	fs.BoolVar(&dryRun, "dry-run", false, "dry run (performs no changes to remote)")
 
-	err = fs.Parse(os.Args[1:])
+	err := fs.Parse(args)
 	if err != nil {
 		return fmt.Errorf("failed to parse flags: %w", err)
 	}
 
-	if storageEndpoint == "" || storageApiKey == "" || storageZoneName == "" {
-		return fmt.Errorf("storage-endpoint, storage-api-key, and storage-zone are required")
+	if srcPath == "" {
+		return fmt.Errorf("src is required")
+	}
+	if endpoint == "" {
+		return fmt.Errorf("endpoint is required")
+	}
+	if password == "" {
+		return fmt.Errorf("password is required")
+	}
+	if zoneName == "" {
+		return fmt.Errorf("zone-name is required")
 	}
 
 	absSrcPath, err := filepath.Abs(srcPath)
 	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %w", err)
+		return fmt.Errorf("failed to construct absolute path: %w", err)
 	}
-
-	bunnyClient := bunnyclient.New(storageEndpoint, storageZoneName, storageApiKey)
-	stateTracker := statetracker.New(bunnyClient, w, dryRun)
+	if !dirExists(absSrcPath) {
+		return fmt.Errorf("%q is not a directory or does not exist", absSrcPath)
+	}
 
 	ctx, done := context.WithCancel(context.Background())
 
@@ -69,7 +73,7 @@ func run(w io.Writer) error {
 
 		select {
 		case sig := <-signalChannel:
-			fmt.Fprintf(w, "Received signal: %s\n", sig)
+			fmt.Fprintf(w, "received signal: %s\n", sig)
 			done()
 		case <-ctx.Done():
 			fmt.Fprint(w, "closing signal goroutine\n")
@@ -77,9 +81,15 @@ func run(w io.Writer) error {
 		}
 	}()
 
+	stateTracker := statetracker.New(
+		bunnyclient.New(endpoint, zoneName, password),
+		w,
+		dryRun,
+	)
+
 	err = stateTracker.Initialize(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize state tracker: %w", err)
+		return fmt.Errorf("failed to build remote state: %w", err)
 	}
 
 	err = stateTracker.Sync(ctx, absSrcPath)
@@ -88,4 +98,9 @@ func run(w io.Writer) error {
 	}
 
 	return nil
+}
+
+func dirExists(path string) bool {
+	stat, err := os.Stat(path)
+	return err == nil && stat.IsDir()
 }

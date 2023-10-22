@@ -40,7 +40,7 @@ func (bc *BunnyClient) List(ctx context.Context, path string) ([]ListObjectRespo
 	ctx, cancel := context.WithTimeout(ctx, bunnyClientTimeout)
 	defer cancel()
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s", bc.primaryStorageEndpoint), nil)
+	req, err := http.NewRequest(http.MethodGet, bc.primaryStorageEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +62,9 @@ func (bc *BunnyClient) List(ctx context.Context, path string) ([]ListObjectRespo
 
 	var objects []ListObjectResponse
 	err = json.NewDecoder(resp.Body).Decode(&objects)
+	if err != nil {
+		return nil, err
+	}
 
 	prefix := fmt.Sprintf("/%s/", bc.storageZoneName)
 	for i := range objects {
@@ -72,9 +75,6 @@ func (bc *BunnyClient) List(ctx context.Context, path string) ([]ListObjectRespo
 			objects[i].CorrectedPath = path
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
 
 	return objects, nil
 }
@@ -83,7 +83,7 @@ func (bc *BunnyClient) Upload(ctx context.Context, path string, data []byte) err
 	ctx, cancel := context.WithTimeout(ctx, bunnyClientTimeout)
 	defer cancel()
 
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s", bc.primaryStorageEndpoint), bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPut, bc.primaryStorageEndpoint, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (bc *BunnyClient) Delete(ctx context.Context, path string) error {
 	ctx, cancel := context.WithTimeout(ctx, bunnyClientTimeout)
 	defer cancel()
 
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("https://%s", bc.primaryStorageEndpoint), nil)
+	req, err := http.NewRequest(http.MethodDelete, bc.primaryStorageEndpoint, nil)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,35 @@
 Tiny tool to sync local folder to [Bunny Edge Storage](https://bunny.net/pricing/storage/) using [HTTP API](https://docs.bunny.net/reference/storage-api).
 
 > [!WARNING]
-> Very experimental, not for production, no tests, use at your own risk.
+> Use at your own risk.
+
+## Usage
+
+```txt
+Usage of bunnysync:
+  -dry-run
+    	dry run (performs no changes to remote)
+  -endpoint string
+    	storage endpoint (default "https://storage.bunnycdn.com")
+  -password string
+    	storage password
+  -src string
+    	path to the directory to sync
+  -zone-name string
+    	storage zone name
+```
+
+Example:
+
+```bash
+bunnysync \
+    -src /public \
+    -zone-name $STORAGE_ZONE_NAME \
+    -password $STORAGE_PASSWORD
++ blog/implementing-microsoft-rest-api-filter/index.html
++ blog/index.html
+- img/me.hover.jpg
+```
 
 ## Motivation
 
@@ -19,32 +47,14 @@ Sounds complicated for bash and curl only solution.
 
 That's why this tiny tool is built.
 
-## Usage
+See [Real life example](https://github.com/skibish/sergeykibish.com/blob/7000d869d37322167a731e189b0ff6b6298f9570/.github/workflows/deploy.yml#L43-L56).
 
-```txt
-Usage of bunnysync:
-  -dry-run
-    	dry run (performs no changes to remote)
-  -src string
-    	source path (default "/my/current/folder")
-  -storage-api-key string
-    	storage api key
-  -storage-endpoint string
-    	storage endpoint (default "storage.bunnycdn.com")
-  -storage-zone string
-    	storage zone name
-```
-
-Example
+## Test
 
 ```bash
-bunnysync \
-    -src /public \
-    -storage-zone $STORAGE_ZONE \
-    -storage-api-key $STORAGE_API_KEY
-+ blog/implementing-microsoft-rest-api-filter/index.html
-+ blog/index.html
-- img/me.hover.jpg
-```
+go test -v -cover -race ./...
 
-[Real life example](https://github.com/skibish/sergeykibish.com/blob/7000d869d37322167a731e189b0ff6b6298f9570/.github/workflows/deploy.yml#L43-L56).
+# If you want to update/extend sync scenario, then to "record" real responses execute the code below.
+# This will update the api_fixtures.json file.
+TEST_RECORD=true BUNNY_PASSWORD=$BUNNY_PASSWORD BUNNY_STORAGE_ENDPOINT=https://storage.bunnycdn.com go test -v -cover -race ./...
+```

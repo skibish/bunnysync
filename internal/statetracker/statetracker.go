@@ -16,7 +16,6 @@ import (
 )
 
 const connectionsLimit = 25
-const numOfWorkers = 10
 
 type StateTracker struct {
 	sync.RWMutex
@@ -91,6 +90,7 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 		})
 	})
 
+	numOfWorkers := 10
 	for i := 0; i < numOfWorkers; i++ {
 		g.Go(func() error {
 			for path := range paths {
