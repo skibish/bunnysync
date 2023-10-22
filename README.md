@@ -47,7 +47,7 @@ Sounds complicated for bash and curl only solution.
 
 That's why this tiny tool is built.
 
-See [Real life example](https://github.com/skibish/sergeykibish.com/blob/7000d869d37322167a731e189b0ff6b6298f9570/.github/workflows/deploy.yml#L43-L56).
+See [Real life example](https://github.com/skibish/sergeykibish.com/blob/faf72c35bc77cb96ac211496fafe15a09d8b0f29/.github/workflows/deploy.yml#L43-L56).
 
 ## Test
 
