@@ -82,7 +82,7 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 				return nil
 			}
 			select {
-			case paths <- path:
+			case paths <- filepath.ToSlash(path):
 			case <-gctx.Done():
 				return gctx.Err()
 			}
