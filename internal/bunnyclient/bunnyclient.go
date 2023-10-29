@@ -17,7 +17,7 @@ type BunnyClient struct {
 	storageAPIKey          string
 }
 
-const bunnyClientTimeout = 10 * time.Second
+const bunnyClientTimeout = 60 * time.Second
 
 type ListObjectResponse struct {
 	Checksum      string `json:"Checksum"`

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/skibish/bunnysync/internal/bunnyclient"
 	"golang.org/x/sync/errgroup"
 )
@@ -104,7 +105,10 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 				if !ok || hash != remoteHash {
 					fmt.Fprintf(s.w, "+ %s\n", correctedFilePath)
 					if !s.dryRun {
-						err = s.bc.Upload(ctx, correctedFilePath, b)
+						op := func() error {
+							return s.bc.Upload(ctx, correctedFilePath, b)
+						}
+						err = backoff.Retry(op, backoff.NewExponentialBackOff())
 						if err != nil {
 							return fmt.Errorf("failed to upload %q: %w", correctedFilePath, err)
 						}
@@ -146,7 +150,10 @@ func (s *StateTracker) cleanup(ctx context.Context) error {
 
 			fmt.Fprintf(s.w, "- %s\n", fname)
 			if !s.dryRun {
-				err := s.bc.Delete(ctx, fname)
+				op := func() error {
+					return s.bc.Delete(ctx, fname)
+				}
+				err := backoff.Retry(op, backoff.NewExponentialBackOff())
 				if err != nil {
 					return fmt.Errorf("failed to delete %q: %w", fname, err)
 				}
