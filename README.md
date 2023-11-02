@@ -2,9 +2,6 @@
 
 Tool to sync local folder to [Bunny Storage](https://bunny.net/pricing/storage/) using [HTTP API](https://docs.bunny.net/reference/storage-api).
 
-> [!WARNING]
-> Use at your own risk.
-
 ## Usage
 
 ```txt
