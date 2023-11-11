@@ -192,7 +192,7 @@ func (p *requestsPlayer) next() {
 	p.nextNum++
 }
 
-func (p *requestsPlayer) capture(w http.ResponseWriter, r *http.Request) {
+func (p *requestsPlayer) record(w http.ResponseWriter, r *http.Request) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -235,7 +235,7 @@ func (p *requestsPlayer) capture(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (p *requestsPlayer) play(w http.ResponseWriter, r *http.Request) {
+func (p *requestsPlayer) replay(w http.ResponseWriter, r *http.Request) {
 	key := fmt.Sprintf("%d:%s:%s", p.nextNum, r.Method, r.URL.Path)
 
 	resp, ok := p.cache[key]
@@ -272,10 +272,10 @@ func (p *requestsPlayer) load() error {
 func (p *requestsPlayer) init() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if p.records {
-			p.capture(w, r)
+			p.record(w, r)
 			return
 		}
 
-		p.play(w, r)
+		p.replay(w, r)
 	}))
 }
