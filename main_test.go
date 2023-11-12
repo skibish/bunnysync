@@ -82,55 +82,78 @@ func TestUploadScenario(t *testing.T) {
 		pswd = os.Getenv("BUNNY_PASSWORD")
 	}
 
-	var buf safeBuffer
-
-	dir1Files := []string{
+	dirFiles := []string{
 		"file1",
 		"nd1/file2",
 		"nd2/nd21/file3",
 	}
-	// upload files
-	player.next()
-	dir1 := createDirectory(t, dir1Files)
-	err := run(&buf, []string{"-src", dir1, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
-	if err != nil {
-		t.Fatal(err)
-	}
-	s1 := buf.String()
-	for _, p := range dir1Files {
-		expected := fmt.Sprintf("+ %s\n", p)
-		if !strings.Contains(s1, expected) {
-			t.Fatalf("expected to see %q in %q", expected, s1)
-		}
-	}
+	dir1 := createDirectory(t, dirFiles)
 
-	// remove files
-	player.next()
-	buf = safeBuffer{}
+	t.Run("create files", func(t *testing.T) {
+		player.next()
+		buf := safeBuffer{}
+		err := run(&buf, []string{"-src", dir1, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := buf.String()
+		for _, p := range dirFiles {
+			expected := fmt.Sprintf("+ %s\n", p)
+			if !strings.Contains(s, expected) {
+				t.Fatalf("expected to see %q in %q", expected, s)
+			}
+		}
+	})
+
+	t.Run("update files", func(t *testing.T) {
+		player.next()
+		for _, p := range dirFiles {
+			os.WriteFile(filepath.Join(dir1, p), []byte("aaa"), os.ModePerm)
+		}
+
+		buf := safeBuffer{}
+		err := run(&buf, []string{"-src", dir1, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := buf.String()
+		for _, p := range dirFiles {
+			expected := fmt.Sprintf("~ %s\n", p)
+			if !strings.Contains(s, expected) {
+				t.Fatalf("expected to see %q in %q", expected, s)
+			}
+		}
+	})
+
 	dir2 := createDirectory(t, []string{})
-	err = run(&buf, []string{"-src", dir2, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
-	if err != nil {
-		t.Fatal(err)
-	}
-	s2 := buf.String()
-	for _, p := range dir1Files {
-		expected := fmt.Sprintf("- %s\n", p)
-		if !strings.Contains(s2, expected) {
-			t.Fatalf("expected to see %q in %q", expected, s2)
+	t.Run("delete files", func(t *testing.T) {
+		player.next()
+		buf := safeBuffer{}
+		err := run(&buf, []string{"-src", dir2, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
+		s := buf.String()
+		for _, p := range dirFiles {
+			expected := fmt.Sprintf("- %s\n", p)
+			if !strings.Contains(s, expected) {
+				t.Fatalf("expected to see %q in %q", expected, s)
+			}
+		}
+	})
 
-	// state should remain empty
-	player.next()
-	buf = safeBuffer{}
-	err = run(&buf, []string{"-src", dir2, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
-	if err != nil {
-		t.Fatal(err)
-	}
-	s3 := buf.String()
-	if s3 != "" {
-		t.Fatalf("expected empty state, got %q", s3)
-	}
+	t.Run("empty state", func(t *testing.T) {
+		player.next()
+		buf := safeBuffer{}
+		err := run(&buf, []string{"-src", dir2, "-endpoint", srv.URL, "-password", pswd, "-zone-name", zoneName})
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := buf.String()
+		if s != "" {
+			t.Fatalf("expected empty state, got %q", s)
+		}
+	})
 
 	if player.records {
 		player.flush()

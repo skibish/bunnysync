@@ -26,9 +26,15 @@ bunnysync \
     -zone-name $STORAGE_ZONE_NAME \
     -password $STORAGE_PASSWORD
 + blog/implementing-microsoft-rest-api-filter/index.html
-+ blog/index.html
+~ blog/index.html
 - img/me.hover.jpg
 ```
+
+Where:
+
+- `+` - new file creted
+- `~` - existing file updated
+- `-` - file deleted
 
 ## Motivation
 

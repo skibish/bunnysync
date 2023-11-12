@@ -102,8 +102,12 @@ func (s *StateTracker) Sync(ctx context.Context, srcDir string) error {
 				correctedFilePath := filepath.ToSlash(strings.TrimPrefix(path, srcDir)[1:])
 				hash := getSha256Hash(b)
 				remoteHash, ok := s.get(correctedFilePath)
+				symbol := "~"
+				if !ok {
+					symbol = "+"
+				}
 				if !ok || hash != remoteHash {
-					fmt.Fprintf(s.w, "+ %s\n", correctedFilePath)
+					fmt.Fprintf(s.w, "%s %s\n", symbol, correctedFilePath)
 					if !s.dryRun {
 						op := func() error {
 							return s.bc.Upload(ctx, correctedFilePath, b)
