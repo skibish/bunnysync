@@ -1,7 +1,7 @@
 module github.com/skibish/bunnysync
 
-go 1.21.3
+go 1.22
 
-require golang.org/x/sync v0.4.0
+require golang.org/x/sync v0.7.0
 
-require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+require github.com/cenkalti/backoff/v4 v4.3.0
